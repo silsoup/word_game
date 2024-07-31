@@ -21,3 +21,15 @@ corr_cnt : 맞춘 갯수
 exe_time : 걸린 시간
 reg_date : 등록한 날짜
 irank : 나의 등수
+===================
+irank 등수 계산, 우선 순위
+1순위 corr_cnt가 더 큰 값.
+2순위 걸린 시간이 더 적게 걸린 것.
+
+query = """
+        SELECT id, corr_cnt, exe_time, reg_date,
+               RANK() OVER (ORDER BY corr_cnt DESC, exe_time ASC) AS irank
+        FROM wordgame
+        """
+        cursor.execute(query)
+c

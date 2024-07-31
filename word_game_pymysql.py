@@ -67,6 +67,8 @@ if correctAnswer>=3:
 else:
     print("Try again")
 print(f"***퀴즈 종료, 총 걸린 시간: {total_time:.2f}초, 문제 맞춘 갯수: {correctAnswer}")
+print("+++++++++++++++result++++++++++++++++")
+print("정답 갯수 | 걸린 시간 | 등록 시간 | 등수")
 
 # DB connection
 import pymysql
@@ -81,11 +83,28 @@ INSERT_SQL = "INSERT INTO wordgame(corr_cnt, exe_time, reg_date) VALUES (%s, %s,
 cursor.execute(INSERT_SQL, (correctAnswer, total_time, current_time))
 conn.commit()
 
-# 아래부터는 다시 해보기
+# Retrieve the rank for the latest entry
+RANK_SQL = """
+SELECT id, rank() over (order by corr_cnt DESC, exe_time ASC) AS irank 
+FROM wordgame 
+ORDER BY id DESC 
+LIMIT 1;
+"""
+cursor.execute(RANK_SQL)
+latest_entry = cursor.fetchone()
+latest_id = latest_entry[0]
+latest_rank = latest_entry[1]
+
+# Update the table with the rank
+UPDATE_SQL = "UPDATE wordgame SET irank = %s WHERE id = %s;"
+cursor.execute(UPDATE_SQL, (latest_rank, latest_id))
+conn.commit()
 
 # 등수 계산 함수
 def get_ranked_game_info():
-    query = "SELECT * FROM wordgame"
+    query = """SELECT corr_cnt, exe_time, reg_date, 
+               rank() over (order by corr_cnt DESC, exe_time ASC) AS irank 
+               FROM wordgame"""
     cursor.execute(query)
     return cursor.fetchall()
 
